@@ -9,6 +9,13 @@ import numpy as np
 #want to add inflation here
 def accumReturn(r,c,ic=0,i=0):  
     '''
+    Gives the accumlated return for varying r,c, and i (ic is constant) and
+    returns an array the same size at the parameters. i & c can be scalars 
+    if they do not change. If r,c,i are all constant, then use
+        calcReturnPmt(r,c,n,i) + calcReturnInit(r,ic,n,i)
+    The return value is an array with the cumulative return for each period.
+    If only the final value is of interest, then only use sum[-1]
+
     Parameters
     ----------
     r : numpy.ndarray
@@ -33,7 +40,7 @@ def accumReturn(r,c,ic=0,i=0):
         carr = c
     else:
         print('unknown data type for "c"')
-        return 0
+        return np.array([0])
     
     #make sure i is an array
     if ((type(i)==int) or (type(i)==float)):
@@ -42,7 +49,7 @@ def accumReturn(r,c,ic=0,i=0):
         iarr = i
     else:
         print('unknown data type for "c"')
-        return 0
+        return np.array([0])
     
     sum = np.zeros(r.size)
     sum[0] = carr[0] + ic
@@ -52,6 +59,12 @@ def accumReturn(r,c,ic=0,i=0):
 
 def calcReturnPmt(r,c,n,i=0):
     '''
+    Gives the return after n years of a periodic deposits, c, given the 
+    return rate r and inflation i. In its simplest form, this equation is 
+    c/r*((1+r)^n - 1), one of the Time Value of Money equations. All the 
+    parameters can be either scalars or arrays to allow r and i to vary over 
+    the n periods. n can also be an array to give cumulative growth.
+    
     Parameters
     ----------
     r : float or numpy.ndarray
@@ -75,7 +88,15 @@ def calcReturnPmt(r,c,n,i=0):
     return sum
 
 def calcReturnInit(r,ic,n,i=0):   
-    '''
+    '''   
+    Gives the return after n years of a single initial deposit, ic, given the 
+    return rate r and inflation i. In its simplest form, this equation is 
+    ic*(1+r)^n. r & i can be scalars or arrays to allow them to vary over the 
+    n periods. All the parameters can be either scalars or arrays to allow
+    r and i to vary over the n periods. n can also be an array to give 
+    cumulative growth.
+    
+    
     Parameters
     ----------
     r : float or numpy.ndarray
@@ -97,7 +118,7 @@ def calcReturnInit(r,ic,n,i=0):
     sum = ic*np.power((1+r)/(1+i),n)
     return sum
 
-def taxBrackets(file):
+def taxBrackets(file='single'):
     '''
     Parameters
     ----------
@@ -147,45 +168,108 @@ def taxBrackets(file):
             [539900,0.37]])
     return tr
 
-def taxRate(inc,tb):
+def standardDeducuction(file='single'):
     '''
-    Calculate the effective tax rate given taxable income
+    Parameters
+    ----------
+    file : str, optional
+        filing status, one of 'single','joint','separate','head'.
+        The default is 'single'.
+
+    Returns
+    -------
+    standard deduction for 2022.
+    '''
+    if ('single'==file):
+        ded = 12950
+    elif ('joint'==file):
+        ded = 25900
+    elif ('separate'==file):
+        ded = 12950
+    else: #head of household
+        ded = 19400
+    return ded
+
+def taxRate(inc,tb,ded=0):
+    '''
+    Calculate the effective tax rate given taxable income.
+    This function uses a mathematically identical calculation of tax that is 
+    algorithmically simpler. e.g. if income is $50,000 then
+        tax = 50000*0.10 +
+              (50000-10275)*(0.12-0.1) +
+              (50000-41775)*(0.22-0.12)
+    The more common calculation is 
+        tax = 10275*0.10 +
+              (41775-10275)*0.12 +
+              (50000-41775)*0.22
     Parameters
     ----------
     inc : float or int
         taxable income in $.
     tr : array of tax brackets and tax rates
-
+    ded : float or int
+        deduction, taxable income is gross income - deduction 
+        If effective tax = tax/total income, then use taxRate(inc,tb,ded), but
+        if effective tax = tax/taxable income, then set ded to zero
     Returns
     -------
     taxRate : float
         The effective tax rate.
     '''        
-    k=1; tax = inc*tb[0,1]
-    while ((k<tb.shape[0]) and (inc>tb[k,0])):
-        tax = tax+(inc-tb[k,0])*(tb[k,1]-tb[k-1,1])
+    txInc = inc-ded
+    k=1; tax = txInc*tb[0,1]
+    while ((k<tb.shape[0]) and (txInc>tb[k,0])):
+        tax = tax+(txInc-tb[k,0])*(tb[k,1]-tb[k-1,1])
         k=k+1
     return tax/inc
 
-#An alternate way of calculating effective tax rate. This code is
-#longer, and it doesn't seem to be any clearer
-# def taxRate2(inc,tr):
-#     if (inc<=tr[1,0]):
-#         tax=inc*tr[0,1]
-#     else:
-#         k=1; tax = tr[1,0]*tr[0,1]
-#         while ((k<tr.shape[0]-1) and (inc>tr[k,0])):
-#             if (inc>tr[k+1,0]):
-#                 tax = tax+(tr[k+1,0]-tr[k,0])*tr[k,1]
-#             else:
-#                 tax = tax+(inc-tr[k,0])*tr[k,1]
-#             k=k+1
-#         if (inc>tr[tr.shape[0]-1,0]):
-#             tax = tax+(inc-tr[k,0])*tr[k,1]
-#     return tax/inc
+def taxRate2(inc,tb,ded=0):
+    '''
+    Calculate the effective tax rate given taxable income.
+    This function uses the algorithm below (assuming income is $50k) 
+        tax = 10275*0.10 +
+              (41775-10275)*0.12 +
+              (50000-41775)*0.22
+    Parameters
+    ----------
+    inc : float or int
+        taxable income in $.
+    tr : array of tax brackets and tax rates
+    ded : float or int
+        deduction, taxable income is gross income - deduction 
+        If effective tax = tax/total income, then use taxRate(inc,tb,ded), but
+        if effective tax = tax/taxable income, then set ded to zero
+    Returns
+    -------
+    taxRate : float
+        The effective tax rate.
+    '''        
+    txInc = inc-ded
+    if (txInc<=tb[1,0]):
+        tax=txInc*tb[0,1]
+    else:
+        k=1; tax = tb[1,0]*tb[0,1]
+        while ((k<tb.shape[0]-1) and (txInc>tb[k,0])):
+            if (txInc>tb[k+1,0]):
+                tax = tax+(tb[k+1,0]-tb[k,0])*tb[k,1]
+            else:
+                tax = tax+(txInc-tb[k,0])*tb[k,1]
+            k=k+1
+        if (txInc>tb[tb.shape[0]-1,0]):
+            tax = tax+(txInc-tb[k,0])*tb[k,1]
+    return tax/txInc
 
 def taxedRetirement(r,c,n,i,Tw,Tr):  
     '''
+    Calculate the after-tax money available in retirement for an account with 
+    periodic contributions assuming a constant rate of return, 
+    constant contributions, and constant inflation. This is designed to 
+    compare the effective savings of a normal investment account versus
+    Roth and traditional tax sheltered accounts.
+    For a normal account, use Tw=working years ordinary tax, Tr=capital gains tax
+    For traditional IRA/401k, use Tw = 0, Tr=retirement ordinary tax
+    For Roth IRA/401k, use Tw=working years ordinary tax, Tr=0
+    
     Parameters
     ----------
     r : float
