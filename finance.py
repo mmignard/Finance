@@ -23,7 +23,8 @@ def accumReturn(r,c,ic=0,i=0):
     Returns
     -------
     sum : numpy.ndarray
-        DESCRIPTION.
+        Calculate the accumulated return on an investment given arrays of
+        returns, periodic contribution, inflation, and an initial contribution.
     '''  
     #make sure c is an array
     if ((type(c)==int) or (type(c)==float)):
@@ -106,7 +107,7 @@ def taxBrackets(file):
 
     Returns
     -------
-    array of tax brackets and tax rates.
+    array of tax brackets and tax rates for 2022.
     '''
     if ('single'==file):
         tr = np.array([
