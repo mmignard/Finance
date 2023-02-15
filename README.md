@@ -6,14 +6,11 @@ This is some code I wrote to help decide if a traditional or Roth IRA is better,
 
 file finance.py has some general purpose functions for calculating financials
 
-calcReturnInit(r,ic,n,i)
-This gives the return after n years of a single initial deposit, ic given the return rate r and inflation i. In its simplest form, this equation is ic*(1+r)^n. r & i can be scalars or arrays to allow them to vary over the n periods. If r & i are arrays, then n must be too.
+calcReturnInit(r,ic,n,i) gives the return after n years of a single initial deposit, ic given the return rate r and inflation i. In its simplest form, this equation is ic*(1+r)^n. r & i can be scalars or arrays to allow them to vary over the n periods. If r & i are arrays, then n must be too.
 
-calcReturnPmt(r,c,n,i=0)
-This gives the return after n years of a single initial deposit, ic, given the return rate r and inflation i. In its simplest form, this equation is c/r*((1+r)^n - 1), one of the Time Value of Money equations. All the parameters can be either scalars or arrays to allow r and i to vary over the n periods. n can also be an array to give cumulative growth.
+calcReturnPmt(r,c,n,i=0) gives the return after n years of a single initial deposit, ic, given the return rate r and inflation i. In its simplest form, this equation is c/r*((1+r)^n - 1), one of the Time Value of Money equations. All the parameters can be either scalars or arrays to allow r and i to vary over the n periods. n can also be an array to give cumulative growth.
 
-accumReturn(r,c,ic,i)
-This gives the accumlated return for varying r,c, and i (ic is constant) and returns an array the same size at the parameters. i & c can be scalars if they do not change.
+accumReturn(r,c,ic,i) gives the accumlated return for varying r,c, and i (ic is constant) and returns an array the same size at the parameters. i & c can be scalars if they do not change.
 
 This is a comparison of a single contribution, or annual payments
 [<img src="./images/AnnualVsInitialContribution.svg" width="400">]()
@@ -22,10 +19,11 @@ This graph shows the effects of smaller compounding periods:
 [<img src="./images/CompoundingInterval.svg" width="400">]()
 
 The Social Security Administration has data on expected lifetimes that is plotted linearly here. The data is from [https://www.ssa.gov/oact/HistEst/PerLifeTablesHome.html]()
+
 [<img src="./images/SurvivalFuncLin.svg" width="400">]()
 
 And it is plotted logarithmically here. If you are counting on withdrawals from a stock portfolio to fund retirement income, you probably need to plan on a lifespan of 105 years because an average person is estimated to have a 1% chance of surviving until to that age. An annuity is probably a better option.
-[<img src="./images/SurvivalFuncLof.svg" width="400">]()
+[<img src="./images/SurvivalFuncLog.svg" width="400">]()
 
 This graph shows marginal and effective tax rates for single filers and married filing jointly.
 [<img src="./images/TaxRate2022.svg" width="400">]()
